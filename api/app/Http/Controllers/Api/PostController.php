@@ -8,7 +8,9 @@ use App\Transformers\PostsTransformer;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Pagination\IlluminatePaginatorAdapter;
-use App\Http\Requests\PostsRequest;
+use App\Http\Requests\PostsStoreRequest;
+use App\Http\Requests\PostsUpdateRequest;
+use Illuminate\Support\Str;
 
 class PostController extends Controller
 {
@@ -42,8 +44,14 @@ class PostController extends Controller
         return response()->json(['message' => "No query results for model [".Posts::class."]"], 404);
     }
 
-    public function store(PostsRequest $request)
-    {
+    public function store(PostsStoreRequest $request)
+    {   
+        if(!$request->get('slug')) {
+            $create_slug = Str::slug($request->get('title'), '-');
+            $count_slug = Posts::whereRaw("slug = '$create_slug' or slug LIKE '$create_slug-%'")->count();
+            $request['slug'] = $create_slug . ($count_slug ? '-' . ($count_slug + 1) : '');
+        }
+
         $request['user_id'] = $request->user()->id;
 
         $response = Posts::create($request->toArray());
@@ -51,7 +59,7 @@ class PostController extends Controller
         return response()->json(['data' => $this->postsTransformer->transform($response)], 201);
     }
 
-    public function update($slug, PostsRequest $request)
+    public function update($slug, PostsUpdateRequest $request)
     {
         $response = Posts::where('slug', $slug)
                     ->update($request->toArray());
