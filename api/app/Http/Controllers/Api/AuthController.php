@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use App\User;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\LoginRequest;
+use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
